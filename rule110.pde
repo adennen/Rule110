@@ -7,9 +7,12 @@
 // Press a key to erase the input row
 
 /* Globals */
-int boxWidth = 600, boxHeight = 600;
-int ofsX = 50, ofsY = 50;
-int inset = 1;
+final int boxWidth = 600, boxHeight = 600;
+final int ofsX = 50, ofsY = 50;
+final int inset = 1;
+
+color [] topRowState;
+int lastDotX; // X position of the last dot added
 
 color drawColor = color(127, 255, 127);
 color whiteColor = color(255);
@@ -17,6 +20,8 @@ color blackColor = color(0);
 
 void setup() {
   size(700, 700);
+  
+  topRowState = new color[width];
   
   textSize(32);
   fill(color(0));
@@ -28,18 +33,43 @@ void setup() {
   // Set the inital pixel
   loadPixels();
   clearFrame();
-  pixels[ ((ofsY+inset-1)*height) + ofsX+(boxWidth/2) ] = drawColor;
+  saveTopRow(); // Initialize the top row array to white color
+  int initialPixelCoordinate = ((ofsY+inset-1)*height) + ofsX+(boxWidth/2);
+  pixels[ initialPixelCoordinate ] = drawColor;
+  lastDotX = ofsX+(boxWidth/2);
   algorithm();
   updatePixels();
 }
 
-// Clear the outer frame around the drawing area
+// Clear the outer frame area around the drawing area
 void clearFrame() {
   for (int y = ofsY; y < (ofsY + boxHeight); y++) {
     for (int x = ofsX; x < (ofsX + boxWidth); x++) {
       pixels[ (y * height) + x ] = color(255);
     }
   }
+}
+
+// Save and restore top row
+void saveTopRow() {
+  for (int i = ofsX; i < ofsX + boxWidth; i++) {
+      topRowState[i] = pixels[ ((ofsY+inset-1)*height) + i ];
+  }
+}
+void restoreTopRow() {
+  for (int i = ofsX; i < ofsX + boxWidth; i++) {
+      pixels[ ((ofsY+inset-1)*height) + i ] = topRowState[i];
+  }
+}
+
+void clearInputRow() {
+  loadPixels();
+  for (int i = ofsX; i < ofsX + boxWidth; i++) {
+    pixels[ ((ofsY+inset-1)*height) + i ] = whiteColor;
+  }
+  saveTopRow(); // Save the cleared row state
+  algorithm(); // Redraw the screen
+  updatePixels();
 }
 
 // Rule 110 algorithm
@@ -63,9 +93,42 @@ void algorithm() {
   }
 }
 
-// Don't draw anything in the loop
+// Allow movement of the last dot entered by the arrow keys
 void draw() {
-  // not used
+  boolean redrawFlag = false;
+  
+  if (keyPressed) {
+    if (key == CODED) {
+      if (keyCode == LEFT) {
+        lastDotX--;
+        redrawFlag = true;
+      }
+      else if (keyCode == RIGHT) {
+        lastDotX++;
+        redrawFlag = true;
+      }
+    }
+  }
+  
+  if (redrawFlag) {
+    // Bounds checking
+    if (lastDotX < ofsX+inset) {
+      lastDotX = ofsX;
+      redrawFlag = false;
+    } else if (lastDotX >= ofsX+boxWidth-inset) {
+      lastDotX = ofsX+boxWidth-inset;
+      redrawFlag = false;
+    }
+    else {
+      // We're in bounds so update
+      int pixelCoordinate = ((ofsY+inset-1)*height) + lastDotX;
+      loadPixels();
+      restoreTopRow();
+      pixels[ pixelCoordinate ] = drawColor;
+      algorithm();
+      updatePixels();
+    }
+  }
 }
 
 // Only draw on mouse press or drag
@@ -76,29 +139,26 @@ void mousePressed() {
 void mouseDragged() {
   mousePressOrDrag(); 
 }
-void mousePressOrDrag() {
-  color drawColor = color(127, 255, 127);
-  color eraseColor = color(255);
-  
+void mousePressOrDrag() {  
   if (mouseX > ofsX && mouseX < ofsX + boxWidth) {
+    int pixelCoordinate = ((ofsY+inset-1)*height) + mouseX;
+    saveTopRow();
+    
     loadPixels();
     if (mouseButton == LEFT) {
-      pixels[ ((ofsY+inset-1)*height) + mouseX ] = drawColor;
+      pixels[ pixelCoordinate ] = drawColor;
+      lastDotX = mouseX;
     }
-    else pixels[ ((ofsY+inset-1)*height) + mouseX ] = whiteColor;
+    else pixels[ pixelCoordinate ] = whiteColor;
     
     algorithm();
     updatePixels();
   }
 }
 
-
 void keyPressed() {
-  // Clear the top input row when a key is pressed
-  loadPixels();
-  for (int i = ofsX; i < ofsX + boxWidth; i++) {
-    pixels[ ((ofsY+inset-1)*height) + i ] = whiteColor;
+  // Clear the top input row when space is pressed
+  if (key == ' ') {
+    clearInputRow();
   }
-  algorithm();
-  updatePixels();
 }

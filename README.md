@@ -13,7 +13,10 @@ Controls
 --------
 * Left click the mouse to add an input row point 
 * Right click the mouse to erase an input row point 
-* Press a key to erase the input row 
+* Press the space bar to erase the input row 
+
+New
+* Hold the left or right arrow keys to move the last input row point left or right
 
 ---
 Developed by [Aron Dennen](http://www.arondennen.com)
