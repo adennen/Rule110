@@ -5,7 +5,7 @@ Rule 110 cellular automaton simulator
 
 Summary
 -------
-A processing sketch that interactively simluates the Rule 110 cellular atomaton
+A processing sketch that interactively simulates the Rule 110 cellular atomaton
 
 Processing is available for free for Mac, Windows and Linux at https://processing.org
 
